@@ -1,4 +1,5 @@
 using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Repository.Repositories.Interfaces;
 
 namespace Repository.Repositories
@@ -6,24 +7,25 @@ namespace Repository.Repositories
     public class EmployeeRepository : BaseRepository<Employee>, IEmployeeRepository
     {
 
-        public IEnumerable<Employee> GetByAge(int age)
+        public async Task<IEnumerable<Employee>> GetByAgeAsync(int age)
         {
-            return GetAll().Where(e => e.Age == age);
+            return await _dbSet.Where(e => e.Age == age).ToListAsync();
         }
 
-        public IEnumerable<Employee> GetByDepartmentId(int departmentId)
+        public async Task<IEnumerable<Employee>> GetByDepartmentIdAsync(int departmentId)
         {
-            return GetAll().Where(e => e.DepartmentId == departmentId);
+            return await _dbSet.Where(e => e.DepartmentId == departmentId).ToListAsync();
         }
 
-        public IEnumerable<Employee> Search(string text)
+        public async Task<IEnumerable<Employee>> SearchAsync(string text)
         {
             if (string.IsNullOrEmpty(text))
-                return GetAll();
+                return await GetAllAsync();
 
-            return GetAll()
-                .Where(e => (e.Name != null && e.Name.Contains(text, StringComparison.OrdinalIgnoreCase)) ||
-                            (e.Surname != null && e.Surname.Contains(text, StringComparison.OrdinalIgnoreCase)));
+            return await _dbSet
+                .Where(e => (e.Name != null && e.Name.Contains(text)) ||
+                            (e.Surname != null && e.Surname.Contains(text)))
+                .ToListAsync();
         }
     }
 }

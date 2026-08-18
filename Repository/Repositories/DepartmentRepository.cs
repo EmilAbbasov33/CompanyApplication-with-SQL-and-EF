@@ -1,4 +1,5 @@
 using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Repository.Data;
 using Repository.Repositories.Interfaces;
 
@@ -7,14 +8,14 @@ namespace Repository.Repositories
     public class DepartmentRepository : BaseRepository<Department>, IDepartmentRepository
     {
 
-        public IEnumerable<Department> Search(string text)
+        public async Task<IEnumerable<Department>> SearchAsync(string text)
         {
             if (string.IsNullOrEmpty(text))
-                return GetAll();
+                return await GetAllAsync();
 
-            return GetAll()
-                .Where(d => d.Name != null && d.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            return await _dbSet
+                .Where(d => d.Name != null && d.Name.Contains(text))
+                .ToListAsync();
         }
     }
 }

@@ -1,4 +1,5 @@
 using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Repository.Data;
 using Repository.Repositories.Interfaces;
 
@@ -6,48 +7,45 @@ namespace Repository.Repositories
 {
     public class BaseRepository<T> : IBaseRepository<T> where T : BaseEntity
     {
-        private readonly List<T> _dbSet;
+        protected readonly AppDbContext _context;
+        protected readonly DbSet<T> _dbSet;
 
         public BaseRepository()
         {
-            _dbSet = AppDbContext<T>.datas;
+            _context = new AppDbContext();
+            _dbSet = _context.Set<T>();
         }
 
-        public void Create(T entity)
+        public async Task CreateAsync(T entity)
         {
-            entity.Id = _dbSet.Count > 0 ? _dbSet.Max(e => e.Id) + 1 : 1;
-            _dbSet.Add(entity);
+            await _dbSet.AddAsync(entity);
+            await _context.SaveChangesAsync();
         }
 
-        public void Update(T entity)
+        public async Task UpdateAsync(T entity)
         {
-            var existing = _dbSet.FirstOrDefault(e => e.Id == entity.Id);
-            if (existing != null)
-            {
-                var index = _dbSet.IndexOf(existing);
-                _dbSet[index] = entity;
-            }
+            _dbSet.Update(entity);
+            await _context.SaveChangesAsync();
         }
 
-        public void Delete(int id)
+        public async Task DeleteAsync(int id)
         {
-            var existing = _dbSet.FirstOrDefault(e => e.Id == id);
+            var existing = await _dbSet.FirstOrDefaultAsync(e => e.Id == id);
             if (existing != null)
             {
                 _dbSet.Remove(existing);
+                await _context.SaveChangesAsync();
             }
         }
 
-        public T? GetById(int id)
+        public async Task<T?> GetByIdAsync(int id)
         {
-            return _dbSet.FirstOrDefault(e => e.Id == id);
+            return await _dbSet.FirstOrDefaultAsync(e => e.Id == id);
         }
 
-        public IEnumerable<T> GetAll()
+        public async Task<IEnumerable<T>> GetAllAsync()
         {
-            return _dbSet;
+            return await _dbSet.ToListAsync();
         }
     }
-
-
 }
