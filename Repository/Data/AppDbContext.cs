@@ -1,7 +1,19 @@
+using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
 namespace Repository.Data
 {
-    internal class AppDbContext<T>
+    public class AppDbContext : DbContext
     {
-        public static List<T> datas = [];
+        public DbSet<Department> Departments { get; set; } = null!;
+        public DbSet<Employee> Employees { get; set; } = null!;
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlServer(@"Server=.\SQLEXPRESS03;Database=CompanyAppDb;Trusted_Connection=True;TrustServerCertificate=True;");
+            }
+        }
     }
 }
