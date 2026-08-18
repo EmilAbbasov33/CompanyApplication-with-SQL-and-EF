@@ -1,4 +1,4 @@
-using Domain.Entities;
+using Service.DTOs;
 using Service.Exceptions;
 using Service.Services.Interfaces;
 using Spectre.Console;
@@ -25,7 +25,7 @@ namespace CompanyApplication.Controller
             AnsiConsole.MarkupLine($"[green]✔ {message}[/]");
         }
 
-        private void PrintEmployees(IEnumerable<Employee> employees, string emptyMessage = "[yellow]Siyahı boşdur.[/]")
+        private void PrintEmployees(IEnumerable<EmployeeDto> employees, string emptyMessage = "[yellow]Siyahı boşdur.[/]")
         {
             if (!employees.Any())
             {
@@ -48,12 +48,12 @@ namespace CompanyApplication.Controller
             AnsiConsole.Write(table);
         }
 
-        public void Create(Employee employee)
+        public async Task CreateAsync(EmployeeCreateDto dto)
         {
             try
             {
-                AnsiConsole.Status().Start("Yaradılır...", ctx => {
-                    _employeeService.Create(employee);
+                await AnsiConsole.Status().StartAsync("Yaradılır...", async ctx => {
+                    await _employeeService.CreateAsync(dto);
                 });
                 PrintSuccess("Employee uğurla yaradıldı.");
             }
@@ -71,12 +71,12 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void Update(Employee employee)
+        public async Task UpdateAsync(EmployeeUpdateDto dto)
         {
             try
             {
-                AnsiConsole.Status().Start("Yenilənir...", ctx => {
-                    _employeeService.Update(employee);
+                await AnsiConsole.Status().StartAsync("Yenilənir...", async ctx => {
+                    await _employeeService.UpdateAsync(dto);
                 });
                 PrintSuccess("Employee uğurla yeniləndi.");
             }
@@ -98,12 +98,12 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void Delete(int id)
+        public async Task DeleteAsync(int id)
         {
             try
             {
-                AnsiConsole.Status().Start("Silinir...", ctx => {
-                    _employeeService.Delete(id);
+                await AnsiConsole.Status().StartAsync("Silinir...", async ctx => {
+                    await _employeeService.DeleteAsync(id);
                 });
                 PrintSuccess("Employee uğurla silindi.");
             }
@@ -117,11 +117,11 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void PrintById(int id)
+        public async Task PrintByIdAsync(int id)
         {
             try
             {
-                var emp = _employeeService.GetById(id);
+                var emp = await _employeeService.GetByIdAsync(id);
                 var table = new Table().BorderColor(Color.Cyan).Border(TableBorder.Rounded).Expand();
                 table.AddColumn("[cyan]ID[/]");
                 table.AddColumn("[cyan]Ad Soyad[/]");
@@ -141,11 +141,11 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void PrintByAge(int age)
+        public async Task PrintByAgeAsync(int age)
         {
             try
             {
-                var employees = _employeeService.GetByAge(age);
+                var employees = await _employeeService.GetByAgeAsync(age);
                 PrintEmployees(employees, "[red]Axtarışa uyğun nəticə tapılmadı.[/]");
             }
             catch (Exception ex)
@@ -154,11 +154,11 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void PrintByDepartmentId(int departmentId)
+        public async Task PrintByDepartmentIdAsync(int departmentId)
         {
             try
             {
-                var employees = _employeeService.GetByDepartmentId(departmentId);
+                var employees = await _employeeService.GetByDepartmentIdAsync(departmentId);
                 PrintEmployees(employees, "[red]Axtarışa uyğun nəticə tapılmadı.[/]");
             }
             catch (Exception ex)
@@ -167,11 +167,11 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void PrintAllByDepartmentName(string departmentName)
+        public async Task PrintAllByDepartmentNameAsync(string departmentName)
         {
             try
             {
-                var employees = _employeeService.GetAllByDepartmentName(departmentName);
+                var employees = await _employeeService.GetAllByDepartmentNameAsync(departmentName);
                 PrintEmployees(employees, "[red]Axtarışa uyğun nəticə tapılmadı.[/]");
             }
             catch (Exception ex)
@@ -180,11 +180,11 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public bool Search(string text)
+        public async Task<bool> SearchAsync(string text)
         {
             try
             {
-                var employees = _employeeService.Search(text);
+                var employees = await _employeeService.SearchAsync(text);
                 if (!employees.Any())
                 {
                     AnsiConsole.MarkupLine("[red]Axtarışa uyğun nəticə tapılmadı. Zəhmət olmasa yenidən cəhd edin.[/]");
@@ -200,11 +200,11 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void PrintCount()
+        public async Task PrintCountAsync()
         {
             try
             {
-                var count = _employeeService.GetCount();
+                var count = await _employeeService.GetCountAsync();
                 var panel = new Panel($"Ümumi işçi sayı: [yellow]{count}[/]").BorderColor(Color.Green);
                 AnsiConsole.Write(panel);
             }
@@ -214,11 +214,11 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void PrintAll()
+        public async Task PrintAllAsync()
         {
             try
             {
-                var employees = _employeeService.GetAll();
+                var employees = await _employeeService.GetAllAsync();
                 PrintEmployees(employees);
             }
             catch (Exception ex)

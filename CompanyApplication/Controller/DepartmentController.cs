@@ -1,4 +1,4 @@
-using Domain.Entities;
+using Service.DTOs;
 using Service.Enums;
 using Service.Exceptions;
 using Service.Services.Interfaces;
@@ -27,7 +27,7 @@ namespace CompanyApplication.Controller
             AnsiConsole.MarkupLine($"[green]✔ {message}[/]");
         }
 
-        private void PrintDepartments(IEnumerable<Department> departments, string emptyMessage = "[yellow]Siyahı boşdur.[/]")
+        private async Task PrintDepartmentsAsync(IEnumerable<DepartmentDto> departments, string emptyMessage = "[yellow]Siyahı boşdur.[/]")
         {
             if (!departments.Any())
             {
@@ -43,19 +43,20 @@ namespace CompanyApplication.Controller
 
             foreach (var dept in departments)
             {
-                int currentEmployees = _employeeService.GetByDepartmentId(dept.Id).Count();
+                var employees = await _employeeService.GetByDepartmentIdAsync(dept.Id);
+                int currentEmployees = employees.Count();
                 table.AddRow(dept.Id.ToString(), dept.Name, dept.Capacity.ToString(), currentEmployees.ToString());
             }
 
             AnsiConsole.Write(table);
         }
 
-        public void Create(Department department)
+        public async Task CreateAsync(DepartmentCreateDto dto)
         {
             try
             {
-                AnsiConsole.Status().Start("Yaradılır...", ctx => {
-                    _departmentService.Create(department);
+                await AnsiConsole.Status().StartAsync("Yaradılır...", async ctx => {
+                    await _departmentService.CreateAsync(dto);
                 });
                 PrintSuccess("Department uğurla yaradıldı.");
             }
@@ -69,12 +70,12 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void Update(Department department)
+        public async Task UpdateAsync(DepartmentUpdateDto dto)
         {
             try
             {
-                AnsiConsole.Status().Start("Yenilənir...", ctx => {
-                    _departmentService.Update(department);
+                await AnsiConsole.Status().StartAsync("Yenilənir...", async ctx => {
+                    await _departmentService.UpdateAsync(dto);
                 });
                 PrintSuccess("Department uğurla yeniləndi.");
             }
@@ -92,12 +93,12 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void Delete(int id)
+        public async Task DeleteAsync(int id)
         {
             try
             {
-                AnsiConsole.Status().Start("Silinir...", ctx => {
-                    _departmentService.Delete(id);
+                await AnsiConsole.Status().StartAsync("Silinir...", async ctx => {
+                    await _departmentService.DeleteAsync(id);
                 });
                 PrintSuccess("Department uğurla silindi.");
             }
@@ -111,18 +112,19 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void PrintById(int id)
+        public async Task PrintByIdAsync(int id)
         {
             try
             {
-                var dept = _departmentService.GetById(id);
+                var dept = await _departmentService.GetByIdAsync(id);
                 var table = new Table().BorderColor(Color.Cyan).Border(TableBorder.Rounded).Expand();
                 table.AddColumn("[cyan]ID[/]");
                 table.AddColumn("[cyan]Name[/]");
                 table.AddColumn("[cyan]Capacity[/]");
                 table.AddColumn("[cyan]Current Employees[/]");
                 
-                int currentEmployees = _employeeService.GetByDepartmentId(dept.Id).Count();
+                var employees = await _employeeService.GetByDepartmentIdAsync(dept.Id);
+                int currentEmployees = employees.Count();
                 table.AddRow(dept.Id.ToString(), dept.Name, dept.Capacity.ToString(), currentEmployees.ToString());
                 AnsiConsole.Write(table);
             }
@@ -136,12 +138,12 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void PrintAll()
+        public async Task PrintAllAsync()
         {
             try
             {
-                var departments = _departmentService.GetAll();
-                PrintDepartments(departments);
+                var departments = await _departmentService.GetAllAsync();
+                await PrintDepartmentsAsync(departments);
             }
             catch (Exception ex)
             {
@@ -149,17 +151,17 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public bool Search(string text)
+        public async Task<bool> SearchAsync(string text)
         {
             try
             {
-                var departments = _departmentService.Search(text);
+                var departments = await _departmentService.SearchAsync(text);
                 if (!departments.Any())
                 {
                     AnsiConsole.MarkupLine("[red]Axtarışa uyğun nəticə tapılmadı. Zəhmət olmasa yenidən cəhd edin.[/]");
                     return false;
                 }
-                PrintDepartments(departments);
+                await PrintDepartmentsAsync(departments);
                 return true;
             }
             catch (Exception ex)
@@ -169,12 +171,12 @@ namespace CompanyApplication.Controller
             }
         }
 
-        public void SortByCapacity(SortDirection direction)
+        public async Task SortByCapacityAsync(SortDirection direction)
         {
             try
             {
-                var departments = _departmentService.SortByCapacity(direction);
-                PrintDepartments(departments);
+                var departments = await _departmentService.SortByCapacityAsync(direction);
+                await PrintDepartmentsAsync(departments);
             }
             catch (Exception ex)
             {
