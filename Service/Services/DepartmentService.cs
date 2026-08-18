@@ -1,8 +1,11 @@
+using AutoMapper;
 using Domain.Entities;
 using Repository.Repositories.Interfaces;
+using Service.DTOs;
 using Service.Enums;
 using Service.Exceptions;
 using Service.Helpers.Constants;
+using Service.Profiles;
 using Service.Services.Interfaces;
 
 namespace Service.Services
@@ -11,109 +14,122 @@ namespace Service.Services
     {
         private readonly IDepartmentRepository _departmentRepository;
         private readonly IEmployeeRepository _employeeRepository;
+        private readonly IMapper _mapper;
 
         public DepartmentService(IDepartmentRepository departmentRepository, IEmployeeRepository employeeRepository)
         {
             _departmentRepository = departmentRepository;
             _employeeRepository = employeeRepository;
+            
+            var config = new MapperConfiguration(cfg => {
+                cfg.AddProfile(new MappingProfile());
+            }, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance);
+            _mapper = config.CreateMapper();
         }
 
-        public void Create(Department department)
+        public async Task CreateAsync(DepartmentCreateDto dto)
         {
-            if (department == null)
+            if (dto == null)
                 throw new ValidationException(ValidationConstants.RequiredFieldMessage);
 
-            if (string.IsNullOrWhiteSpace(department.Name))
+            if (string.IsNullOrWhiteSpace(dto.Name))
                 throw new ValidationException(ValidationConstants.RequiredFieldMessage);
 
-            if (department.Capacity < 0)
+            if (dto.Capacity < 0)
                 throw new ValidationException(ValidationConstants.NegativeCapacityMessage);
 
-            if (_departmentRepository.GetAll().Any(d => d.Name.Equals(department.Name, StringComparison.OrdinalIgnoreCase)))
+            var allDepartments = await _departmentRepository.GetAllAsync();
+            if (allDepartments.Any(d => d.Name != null && d.Name.Equals(dto.Name, StringComparison.OrdinalIgnoreCase)))
                 throw new ValidationException(ValidationConstants.DepartmentNameExistsMessage);
 
-            _departmentRepository.Create(department);
+            var department = _mapper.Map<Department>(dto);
+            await _departmentRepository.CreateAsync(department);
         }
 
-        public void Update(Department department)
+        public async Task UpdateAsync(DepartmentUpdateDto dto)
         {
-            if (department == null)
+            if (dto == null)
                 throw new ValidationException(ValidationConstants.RequiredFieldMessage);
 
-            var existingDepartment = _departmentRepository.GetById(department.Id);
+            var existingDepartment = await _departmentRepository.GetByIdAsync(dto.Id);
             if (existingDepartment == null)
                 throw new DepartmentNotFoundException(ValidationConstants.DepartmentNotFoundMessage);
 
-            if (!string.IsNullOrWhiteSpace(department.Name))
+            if (!string.IsNullOrWhiteSpace(dto.Name))
             {
-                if (!existingDepartment.Name.Equals(department.Name, StringComparison.OrdinalIgnoreCase) &&
-                    _departmentRepository.GetAll().Any(d => d.Name.Equals(department.Name, StringComparison.OrdinalIgnoreCase)))
+                var allDepartments = await _departmentRepository.GetAllAsync();
+                if (!existingDepartment.Name.Equals(dto.Name, StringComparison.OrdinalIgnoreCase) &&
+                    allDepartments.Any(d => d.Name != null && d.Name.Equals(dto.Name, StringComparison.OrdinalIgnoreCase)))
                 {
                     throw new ValidationException(ValidationConstants.DepartmentNameExistsMessage);
                 }
 
-                existingDepartment.Name = department.Name;
+                existingDepartment.Name = dto.Name;
             }
 
-            if (department.Capacity >= 0)
+            if (dto.Capacity >= 0)
             {
-                int currentEmployeeCount = _employeeRepository.GetByDepartmentId(department.Id).Count();
-                if (department.Capacity < currentEmployeeCount)
+                var employees = await _employeeRepository.GetByDepartmentIdAsync(dto.Id);
+                int currentEmployeeCount = employees.Count();
+                if (dto.Capacity < currentEmployeeCount)
                     throw new ValidationException(string.Format(ValidationConstants.CapacityTooSmallMessage, currentEmployeeCount));
 
-                existingDepartment.Capacity = department.Capacity;
+                existingDepartment.Capacity = dto.Capacity;
             }
 
-            _departmentRepository.Update(existingDepartment);
+            await _departmentRepository.UpdateAsync(existingDepartment);
         }
 
-        public void Delete(int id)
+        public async Task DeleteAsync(int id)
         {
-            var existingDepartment = _departmentRepository.GetById(id);
+            var existingDepartment = await _departmentRepository.GetByIdAsync(id);
             if (existingDepartment == null)
                 throw new DepartmentNotFoundException(ValidationConstants.DepartmentNotFoundMessage);
 
-            var employees = _employeeRepository.GetByDepartmentId(id);
+            var employees = await _employeeRepository.GetByDepartmentIdAsync(id);
             foreach (var emp in employees)
             {
-                _employeeRepository.Delete(emp.Id);
+                await _employeeRepository.DeleteAsync(emp.Id);
             }
 
-            _departmentRepository.Delete(id);
+            await _departmentRepository.DeleteAsync(id);
         }
 
-        public Department GetById(int id)
+        public async Task<DepartmentDto> GetByIdAsync(int id)
         {
-            var existingDepartment = _departmentRepository.GetById(id);
+            var existingDepartment = await _departmentRepository.GetByIdAsync(id);
             if (existingDepartment == null)
                 throw new DepartmentNotFoundException(ValidationConstants.DepartmentNotFoundMessage);
 
-            return existingDepartment;
+            return _mapper.Map<DepartmentDto>(existingDepartment);
         }
 
-        public IEnumerable<Department> GetAll()
+        public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
         {
-            return _departmentRepository.GetAll();
+            var departments = await _departmentRepository.GetAllAsync();
+            return _mapper.Map<IEnumerable<DepartmentDto>>(departments);
         }
 
-        public IEnumerable<Department> Search(string text)
+        public async Task<IEnumerable<DepartmentDto>> SearchAsync(string text)
         {
-            return _departmentRepository.Search(text);
+            var departments = await _departmentRepository.SearchAsync(text);
+            return _mapper.Map<IEnumerable<DepartmentDto>>(departments);
         }
 
-        public IEnumerable<Department> SortByCapacity(SortDirection direction)
+        public async Task<IEnumerable<DepartmentDto>> SortByCapacityAsync(SortDirection direction)
         {
-            var departments = _departmentRepository.GetAll();
+            var departments = await _departmentRepository.GetAllAsync();
 
             if (direction == SortDirection.Ascending)
             {
-                return departments.OrderBy(d => d.Capacity);
+                departments = departments.OrderBy(d => d.Capacity).ToList();
             }
             else
             {
-                return departments.OrderByDescending(d => d.Capacity);
+                departments = departments.OrderByDescending(d => d.Capacity).ToList();
             }
+
+            return _mapper.Map<IEnumerable<DepartmentDto>>(departments);
         }
     }
 }
-

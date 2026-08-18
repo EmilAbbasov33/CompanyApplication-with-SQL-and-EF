@@ -1,18 +1,18 @@
-using Domain.Entities;
+using Service.DTOs;
 
 namespace Service.Services.Interfaces
 {
     public interface IEmployeeService
     {
-        void Create(Employee employee);
-        void Update(Employee employee);
-        void Delete(int id);
-        Employee GetById(int id);
-        IEnumerable<Employee> GetByAge(int age);
-        IEnumerable<Employee> GetByDepartmentId(int departmentId);
-        IEnumerable<Employee> GetAllByDepartmentName(string departmentName);
-        IEnumerable<Employee> Search(string text);
-        int GetCount();
-        IEnumerable<Employee> GetAll();
+        Task CreateAsync(EmployeeCreateDto dto);
+        Task UpdateAsync(EmployeeUpdateDto dto);
+        Task DeleteAsync(int id);
+        Task<EmployeeDto> GetByIdAsync(int id);
+        Task<IEnumerable<EmployeeDto>> GetByAgeAsync(int age);
+        Task<IEnumerable<EmployeeDto>> GetByDepartmentIdAsync(int departmentId);
+        Task<IEnumerable<EmployeeDto>> GetAllByDepartmentNameAsync(string departmentName);
+        Task<IEnumerable<EmployeeDto>> SearchAsync(string text);
+        Task<int> GetCountAsync();
+        Task<IEnumerable<EmployeeDto>> GetAllAsync();
     }
 }

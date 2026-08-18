@@ -1,8 +1,11 @@
+using AutoMapper;
 using Domain.Entities;
 using Repository.Repositories.Interfaces;
 using Service.Delegates;
+using Service.DTOs;
 using Service.Exceptions;
 using Service.Helpers.Constants;
+using Service.Profiles;
 using Service.Services.Interfaces;
 
 namespace Service.Services
@@ -11,169 +14,213 @@ namespace Service.Services
     {
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IDepartmentRepository _departmentRepository;
+        private readonly IMapper _mapper;
 
         public EmployeeService(IEmployeeRepository employeeRepository, IDepartmentRepository departmentRepository)
         {
             _employeeRepository = employeeRepository;
             _departmentRepository = departmentRepository;
+            
+            var config = new MapperConfiguration(cfg => {
+                cfg.AddProfile(new MappingProfile());
+            }, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance);
+            _mapper = config.CreateMapper();
         }
 
-        private Employee PopulateDepartment(Employee employee)
+        private async Task<EmployeeDto> PopulateDepartmentAsync(Employee employee)
         {
-            employee.Department = _departmentRepository.GetById(employee.DepartmentId)!;
-            return employee;
+            var dto = _mapper.Map<EmployeeDto>(employee);
+            var department = await _departmentRepository.GetByIdAsync(employee.DepartmentId);
+            if(department != null)
+            {
+                dto.Department = _mapper.Map<DepartmentDto>(department);
+            }
+            return dto;
         }
 
-        public void Create(Employee employee)
+        public async Task CreateAsync(EmployeeCreateDto dto)
         {
-            if (employee == null)
+            if (dto == null)
                 throw new ValidationException(ValidationConstants.RequiredFieldMessage);
 
-            if (string.IsNullOrWhiteSpace(employee.Name))
+            if (string.IsNullOrWhiteSpace(dto.Name))
                 throw new ValidationException(ValidationConstants.RequiredFieldMessage);
 
             ValidationRule<string> nameRule = NameValidator.IsValidName;
 
-            if (!nameRule(employee.Name))
+            if (!nameRule(dto.Name))
                 throw new ValidationException(ValidationConstants.InvalidNameMessage);
 
-            if (string.IsNullOrWhiteSpace(employee.Surname))
+            if (string.IsNullOrWhiteSpace(dto.Surname))
                 throw new ValidationException(ValidationConstants.RequiredFieldMessage);
 
-            if (!nameRule(employee.Surname))
+            if (!nameRule(dto.Surname))
                 throw new ValidationException(ValidationConstants.InvalidNameMessage);
 
-            if (string.IsNullOrWhiteSpace(employee.Address))
+            if (string.IsNullOrWhiteSpace(dto.Address))
                 throw new ValidationException(ValidationConstants.RequiredFieldMessage);
 
-            if (employee.Age < ValidationConstants.MinAge || employee.Age > ValidationConstants.MaxAge)
+            if (dto.Age < ValidationConstants.MinAge || dto.Age > ValidationConstants.MaxAge)
                 throw new ValidationException(ValidationConstants.InvalidAgeMessage);
 
-            var department = _departmentRepository.GetById(employee.DepartmentId);
+            var department = await _departmentRepository.GetByIdAsync(dto.DepartmentId);
             if (department == null)
                 throw new DepartmentNotFoundException(ValidationConstants.DepartmentNotFoundMessage);
 
             if (department.Capacity == 0)
                 throw new ValidationException(string.Format(ValidationConstants.DepartmentCapacityZeroMessage, department.Name));
 
-            int currentEmployeeCount = _employeeRepository.GetByDepartmentId(employee.DepartmentId).Count();
+            var employees = await _employeeRepository.GetByDepartmentIdAsync(dto.DepartmentId);
+            int currentEmployeeCount = employees.Count();
             if (currentEmployeeCount >= department.Capacity)
                 throw new ValidationException(string.Format(ValidationConstants.DepartmentFullMessage, department.Name, department.Capacity));
 
-            _employeeRepository.Create(employee);
+            var employee = _mapper.Map<Employee>(dto);
+            await _employeeRepository.CreateAsync(employee);
         }
 
-        public void Update(Employee employee)
+        public async Task UpdateAsync(EmployeeUpdateDto dto)
         {
-            if (employee == null)
+            if (dto == null)
                 throw new ValidationException(ValidationConstants.RequiredFieldMessage);
 
-            var existingEmployee = _employeeRepository.GetById(employee.Id);
+            var existingEmployee = await _employeeRepository.GetByIdAsync(dto.Id);
             if (existingEmployee == null)
                 throw new EmployeeNotFoundException(ValidationConstants.EmployeeNotFoundMessage);
 
             ValidationRule<string> nameRule = NameValidator.IsValidName;
 
-            if (!string.IsNullOrWhiteSpace(employee.Name))
+            if (!string.IsNullOrWhiteSpace(dto.Name))
             {
-                if (!nameRule(employee.Name))
+                if (!nameRule(dto.Name))
                     throw new ValidationException(ValidationConstants.InvalidNameMessage);
-                existingEmployee.Name = employee.Name;
+                existingEmployee.Name = dto.Name;
             }
 
-            if (!string.IsNullOrWhiteSpace(employee.Surname))
+            if (!string.IsNullOrWhiteSpace(dto.Surname))
             {
-                if (!nameRule(employee.Surname))
+                if (!nameRule(dto.Surname))
                     throw new ValidationException(ValidationConstants.InvalidNameMessage);
-                existingEmployee.Surname = employee.Surname;
+                existingEmployee.Surname = dto.Surname;
             }
 
-            if (employee.Age > 0)
+            if (dto.Age > 0)
             {
-                if (employee.Age < ValidationConstants.MinAge || employee.Age > ValidationConstants.MaxAge)
+                if (dto.Age < ValidationConstants.MinAge || dto.Age > ValidationConstants.MaxAge)
                     throw new ValidationException(ValidationConstants.InvalidAgeMessage);
-                existingEmployee.Age = employee.Age;
+                existingEmployee.Age = dto.Age;
             }
 
-            if (!string.IsNullOrWhiteSpace(employee.Address))
+            if (!string.IsNullOrWhiteSpace(dto.Address))
             {
-                existingEmployee.Address = employee.Address;
+                existingEmployee.Address = dto.Address;
             }
 
-            if (employee.DepartmentId > 0)
+            if (dto.DepartmentId > 0)
             {
-                var department = _departmentRepository.GetById(employee.DepartmentId);
+                var department = await _departmentRepository.GetByIdAsync(dto.DepartmentId);
                 if (department == null)
                     throw new DepartmentNotFoundException(ValidationConstants.DepartmentNotFoundMessage);
 
-                if (employee.DepartmentId != existingEmployee.DepartmentId)
+                if (dto.DepartmentId != existingEmployee.DepartmentId)
                 {
                     if (department.Capacity == 0)
                         throw new ValidationException(string.Format(ValidationConstants.DepartmentCapacityZeroMessage, department.Name));
 
-                    int currentEmployeeCount = _employeeRepository.GetByDepartmentId(employee.DepartmentId).Count();
+                    var employees = await _employeeRepository.GetByDepartmentIdAsync(dto.DepartmentId);
+                    int currentEmployeeCount = employees.Count();
                     if (currentEmployeeCount >= department.Capacity)
                         throw new ValidationException(string.Format(ValidationConstants.DepartmentFullMessage, department.Name, department.Capacity));
                 }
 
-                existingEmployee.DepartmentId = employee.DepartmentId;
+                existingEmployee.DepartmentId = dto.DepartmentId;
             }
 
-            _employeeRepository.Update(existingEmployee);
+            await _employeeRepository.UpdateAsync(existingEmployee);
         }
 
-        public void Delete(int id)
+        public async Task DeleteAsync(int id)
         {
-            var existingEmployee = _employeeRepository.GetById(id);
+            var existingEmployee = await _employeeRepository.GetByIdAsync(id);
             if (existingEmployee == null)
                 throw new EmployeeNotFoundException(ValidationConstants.EmployeeNotFoundMessage);
 
-            _employeeRepository.Delete(id);
+            await _employeeRepository.DeleteAsync(id);
         }
 
-        public Employee GetById(int id)
+        public async Task<EmployeeDto> GetByIdAsync(int id)
         {
-            var existingEmployee = _employeeRepository.GetById(id);
+            var existingEmployee = await _employeeRepository.GetByIdAsync(id);
             if (existingEmployee == null)
                 throw new EmployeeNotFoundException(ValidationConstants.EmployeeNotFoundMessage);
 
-            return PopulateDepartment(existingEmployee);
+            return await PopulateDepartmentAsync(existingEmployee);
         }
 
-        public IEnumerable<Employee> GetByAge(int age)
+        public async Task<IEnumerable<EmployeeDto>> GetByAgeAsync(int age)
         {
-            return _employeeRepository.GetByAge(age).Select(PopulateDepartment);
+            var employees = await _employeeRepository.GetByAgeAsync(age);
+            var dtos = new List<EmployeeDto>();
+            foreach (var emp in employees)
+            {
+                dtos.Add(await PopulateDepartmentAsync(emp));
+            }
+            return dtos;
         }
 
-        public IEnumerable<Employee> GetByDepartmentId(int departmentId)
+        public async Task<IEnumerable<EmployeeDto>> GetByDepartmentIdAsync(int departmentId)
         {
-            return _employeeRepository.GetByDepartmentId(departmentId).Select(PopulateDepartment);
+            var employees = await _employeeRepository.GetByDepartmentIdAsync(departmentId);
+            var dtos = new List<EmployeeDto>();
+            foreach (var emp in employees)
+            {
+                dtos.Add(await PopulateDepartmentAsync(emp));
+            }
+            return dtos;
         }
 
-        public IEnumerable<Employee> GetAllByDepartmentName(string departmentName)
+        public async Task<IEnumerable<EmployeeDto>> GetAllByDepartmentNameAsync(string departmentName)
         {
-            var departments = _departmentRepository.Search(departmentName);
+            var departments = await _departmentRepository.SearchAsync(departmentName);
             var departmentIds = departments.Select(d => d.Id).ToList();
 
-            return _employeeRepository.GetAll()
-                .Where(e => departmentIds.Contains(e.DepartmentId))
-                .Select(PopulateDepartment);
+            var allEmployees = await _employeeRepository.GetAllAsync();
+            var employees = allEmployees.Where(e => departmentIds.Contains(e.DepartmentId));
+
+            var dtos = new List<EmployeeDto>();
+            foreach (var emp in employees)
+            {
+                dtos.Add(await PopulateDepartmentAsync(emp));
+            }
+            return dtos;
         }
 
-        public IEnumerable<Employee> Search(string text)
+        public async Task<IEnumerable<EmployeeDto>> SearchAsync(string text)
         {
-            return _employeeRepository.Search(text).Select(PopulateDepartment);
+            var employees = await _employeeRepository.SearchAsync(text);
+            var dtos = new List<EmployeeDto>();
+            foreach (var emp in employees)
+            {
+                dtos.Add(await PopulateDepartmentAsync(emp));
+            }
+            return dtos;
         }
 
-        public int GetCount()
+        public async Task<int> GetCountAsync()
         {
-            return _employeeRepository.GetAll().Count();
+            var employees = await _employeeRepository.GetAllAsync();
+            return employees.Count();
         }
 
-        public IEnumerable<Employee> GetAll()
+        public async Task<IEnumerable<EmployeeDto>> GetAllAsync()
         {
-            return _employeeRepository.GetAll().Select(PopulateDepartment);
+            var employees = await _employeeRepository.GetAllAsync();
+            var dtos = new List<EmployeeDto>();
+            foreach (var emp in employees)
+            {
+                dtos.Add(await PopulateDepartmentAsync(emp));
+            }
+            return dtos;
         }
     }
 }
-

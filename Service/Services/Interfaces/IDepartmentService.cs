@@ -1,16 +1,16 @@
-using Domain.Entities;
+using Service.DTOs;
 using Service.Enums;
 
 namespace Service.Services.Interfaces
 {
     public interface IDepartmentService
     {
-        void Create(Department department);
-        void Update(Department department);
-        void Delete(int id);
-        Department GetById(int id);
-        IEnumerable<Department> GetAll();
-        IEnumerable<Department> Search(string text);
-        IEnumerable<Department> SortByCapacity(SortDirection direction);
+        Task CreateAsync(DepartmentCreateDto dto);
+        Task UpdateAsync(DepartmentUpdateDto dto);
+        Task DeleteAsync(int id);
+        Task<DepartmentDto> GetByIdAsync(int id);
+        Task<IEnumerable<DepartmentDto>> GetAllAsync();
+        Task<IEnumerable<DepartmentDto>> SearchAsync(string text);
+        Task<IEnumerable<DepartmentDto>> SortByCapacityAsync(SortDirection direction);
     }
 }
