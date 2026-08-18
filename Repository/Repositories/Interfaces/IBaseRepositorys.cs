@@ -1,13 +1,13 @@
-﻿using Domain.Entities;
+using Domain.Entities;
 
 namespace Repository.Repositories.Interfaces
 {
     public interface IBaseRepository<T> where T : BaseEntity
     {
-        void Create(T entity);
-        void Update(T entity);
-        void Delete(int id);
-        T? GetById(int id);
-        IEnumerable<T> GetAll();
+        Task CreateAsync(T entity);
+        Task UpdateAsync(T entity);
+        Task DeleteAsync(int id);
+        Task<T?> GetByIdAsync(int id);
+        Task<IEnumerable<T>> GetAllAsync();
     }
 }
