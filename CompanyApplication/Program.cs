@@ -393,7 +393,7 @@ static async Task<bool> HandleUpdateDepartment(DepartmentController departmentCo
     if (capInput == "-1") return true;
 
     int? newDCapacity = string.IsNullOrEmpty(capInput) ? null : int.Parse(capInput);
-    var updateDto = new DepartmentUpdateDto { Id = updateDId, Name = string.IsNullOrEmpty(newDName) ? null : newDName, Capacity = newDCapacity ?? -1 };
+    var updateDto = new DepartmentUpdateDto { Id = updateDId, Name = string.IsNullOrEmpty(newDName) ? null : newDName, Capacity = newDCapacity };
     await departmentController.UpdateAsync(updateDto);
     return false;
 }

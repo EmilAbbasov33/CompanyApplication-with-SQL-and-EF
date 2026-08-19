@@ -5,5 +5,6 @@ namespace Domain.Entities
         public string Name { get; set; } = null!;
         public int Capacity { get; set; }
 
+        public ICollection<Employee> Employees { get; set; } = new List<Employee>();
     }
 }

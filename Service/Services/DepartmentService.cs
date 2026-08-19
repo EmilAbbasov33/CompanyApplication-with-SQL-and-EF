@@ -67,14 +67,14 @@ namespace Service.Services
                 existingDepartment.Name = dto.Name;
             }
 
-            if (dto.Capacity >= 0)
+            if (dto.Capacity.HasValue)
             {
                 var employees = await _employeeRepository.GetByDepartmentIdAsync(dto.Id);
                 int currentEmployeeCount = employees.Count();
-                if (dto.Capacity < currentEmployeeCount)
+                if (dto.Capacity.Value < currentEmployeeCount)
                     throw new ValidationException(string.Format(ValidationConstants.CapacityTooSmallMessage, currentEmployeeCount));
 
-                existingDepartment.Capacity = dto.Capacity;
+                existingDepartment.Capacity = dto.Capacity.Value;
             }
 
             await _departmentRepository.UpdateAsync(existingDepartment);
