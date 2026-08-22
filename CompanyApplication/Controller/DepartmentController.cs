@@ -91,7 +91,7 @@ namespace CompanyApplication.Controller
             await ExecuteSafeAsync(async () =>
             {
                 var dept = await _departmentService.GetById(id);
-                await PrintDepartmentsAsync(new[] { dept });
+                await PrintDepartmentsAsync(new[] { dept! });
             });
 
         public async Task PrintAllAsync() =>

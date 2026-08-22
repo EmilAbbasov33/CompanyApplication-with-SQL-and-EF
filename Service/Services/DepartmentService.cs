@@ -16,10 +16,7 @@ namespace Service.Services
         private readonly IDepartmentRepository _departmentRepository;
         private readonly IEmployeeRepository _employeeRepository;
 
-        public DepartmentService(IDepartmentRepository departmentRepository,
-                                 IEmployeeRepository employeeRepository,
-                                 IMapper mapper)
-            : base(departmentRepository, mapper)
+        public DepartmentService(IDepartmentRepository departmentRepository, IEmployeeRepository employeeRepository, IMapper mapper) : base(departmentRepository, mapper)
         {
             _departmentRepository = departmentRepository;
             _employeeRepository = employeeRepository;

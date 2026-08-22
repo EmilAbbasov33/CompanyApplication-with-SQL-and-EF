@@ -88,7 +88,7 @@ namespace CompanyApplication.Controller
             await ExecuteSafeAsync(async () =>
             {
                 var emp = await _employeeService.GetById(id);
-                PrintEmployees(new[] { emp });
+                PrintEmployees(new[] { emp! });
             });
 
         public async Task PrintByAgeAsync(int age) =>

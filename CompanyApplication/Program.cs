@@ -1,6 +1,5 @@
 using AutoMapper;
 using CompanyApplication.Controller;
-using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Repository.Data;
 using Repository.Repositories;

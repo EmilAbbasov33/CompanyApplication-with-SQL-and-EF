@@ -9,17 +9,12 @@ using Service.Services.Interfaces;
 
 namespace Service.Services
 {
-    public class EmployeeService
-        : CrudManager<Employee, EmployeeDto, EmployeeCreateDto, EmployeeUpdateDto>,
-          IEmployeeService
+    public class EmployeeService : CrudManager<Employee, EmployeeDto, EmployeeCreateDto, EmployeeUpdateDto>, IEmployeeService
     {
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IDepartmentRepository _departmentRepository;
 
-        public EmployeeService(IEmployeeRepository employeeRepository,
-                               IDepartmentRepository departmentRepository,
-                               IMapper mapper)
-            : base(employeeRepository, mapper)
+        public EmployeeService(IEmployeeRepository employeeRepository, IDepartmentRepository departmentRepository, IMapper mapper) : base(employeeRepository, mapper)
         {
             _employeeRepository = employeeRepository;
             _departmentRepository = departmentRepository;
