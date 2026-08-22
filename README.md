@@ -60,9 +60,13 @@ CompanyApplication-with-SQL-and-EF/
 │   ├── Enums/
 │   ├── Exceptions/
 │   ├── Helpers/
-│   ├── Profiles/
+│   ├── AutoMapper/
 │   └── Services/
 │       ├── Interfaces/
+│       │   ├── ICrudService.cs
+│       │   ├── IDepartmentService.cs
+│       │   └── IEmployeeService.cs
+│       ├── CrudManager.cs
 │       ├── DepartmentService.cs
 │       └── EmployeeService.cs
 │
@@ -141,10 +145,11 @@ Department  ──────────────<  Employee
 
 ## 📐 Design Patterns Used
 
-- **Repository Pattern** — Generic `BaseRepository<T>` for reusable CRUD
-- **DTO Pattern** — Clean separation between entities and API/UI layer
-- **Service Layer Pattern** — Business logic isolated from data access
-- **Delegate Pattern** — Reusable validation rules via delegates
+- **Repository Pattern** — Generic `BaseRepository<T>` for reusable database CRUD operations
+- **Service Base Pattern (Template)** — Generic `CrudManager<T...>` implementing `ICrudService` to eliminate CRUD boilerplate while supporting custom validation overrides
+- **DTO Pattern** — Clean separation between database entities and UI using AutoMapper
+- **Service Layer Pattern** — Business logic isolated from data access layer
+- **Delegate Pattern** — Reusable validation rules via custom delegates
 
 ---
 
