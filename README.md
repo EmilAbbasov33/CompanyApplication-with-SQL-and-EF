@@ -130,16 +130,17 @@ Department  ──────────────<  Employee
    cd CompanyApplication-with-SQL-and-EF
    ```
 
-2. **Update connection string** in `Repository/Data/AppDbContext.cs`
+2. **Update Connection String (⚠️ MÜHÜM)**  
+   Mövcud kodda `Server` adı mənim lokal kompüterimə uyğundur (`.\SQLEXPRESS03`). Zəhmət olmasa, layihəni işə salmazdan əvvəl `Repository/Data/AppDbContext.cs` faylına daxil olub **Server adını öz SQL Serverinizə uyğun** dəyişin (məs: `.` və ya `.\SQLEXPRESS`).
    ```csharp
-   optionsBuilder.UseSqlServer("Your_Connection_String_Here");
+   optionsBuilder.UseSqlServer(@"Server=SİZİN_SERVER_ADINIZ;Database=CompanyAppDb;Trusted_Connection=True;TrustServerCertificate=True;");
    ```
 
 3. **Run the application**
    ```bash
    dotnet run --project CompanyApplication
    ```
-   Database migrations will be applied automatically on first run.
+   > **Qeyd:** Proqram işə düşən kimi `Program.cs`-dəki `dbContext.Database.Migrate()` sayəsində Database və cədvəllər avtomatik yaradılacaq. Əlavə `update-database` əmrinə ehtiyac yoxdur.
 
 ---
 
