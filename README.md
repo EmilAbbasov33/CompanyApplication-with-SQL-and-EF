@@ -35,6 +35,8 @@ Domain                 → Core Entities
 ```
 CompanyApplication-with-SQL-and-EF/
 │
+│   ├── CompanyAppDb.bacpac
+│
 ├── Domain/
 │   └── Entities/
 │       ├── BaseEntity.cs
@@ -56,6 +58,8 @@ CompanyApplication-with-SQL-and-EF/
 │
 ├── Service/
 │   ├── DTOs/
+│   │   ├── EmployeeDto/
+│   │   └── DepartmentDto/
 │   ├── Delegates/
 │   ├── Enums/
 │   ├── Exceptions/
