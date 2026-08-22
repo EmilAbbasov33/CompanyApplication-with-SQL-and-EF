@@ -1,8 +1,10 @@
+using AutoMapper;
 using CompanyApplication.Controller;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Repository.Data;
 using Repository.Repositories;
+using Service.AutoMapper;
 using Service.Delegates;
 using Service.DTOs;
 using Service.Enums;
@@ -25,8 +27,12 @@ AnsiConsole.Status().Start("Verilənlər bazası yoxlanılır...", ctx =>
 
 var departmentRepository = new DepartmentRepository();
 var employeeRepository = new EmployeeRepository();
-var departmentService = new DepartmentService(departmentRepository, employeeRepository);
-var employeeService = new EmployeeService(employeeRepository, departmentRepository);
+var mapper = new MapperConfiguration(cfg =>
+{
+    cfg.AddProfile(new MappingProfile());
+}, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance).CreateMapper();
+var departmentService = new DepartmentService(departmentRepository, employeeRepository, mapper);
+var employeeService = new EmployeeService(employeeRepository, departmentRepository, mapper);
 var departmentController = new DepartmentController(departmentService, employeeService);
 var employeeController = new EmployeeController(employeeService);
 
@@ -343,7 +349,7 @@ static async Task<bool> HandleCreateDepartment(DepartmentController departmentCo
 {
     string dName = GetStringInput("[yellow]Department adı:[/]", name =>
     {
-        var all = departmentService.GetAllAsync().GetAwaiter().GetResult();
+        var all = departmentService.GetAll().GetAwaiter().GetResult();
         if (all.Any(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
             return ValidationResult.Error($"[red]{ValidationConstants.DepartmentNameExistsMessage}[/]");
         return ValidationResult.Success();
@@ -364,19 +370,19 @@ static async Task<bool> HandleCreateDepartment(DepartmentController departmentCo
 
 static async Task<bool> HandleUpdateDepartment(DepartmentController departmentController, IDepartmentService departmentService)
 {
-    var allDepts = await departmentService.GetAllAsync();
+    var allDepts = await departmentService.GetAll();
     if (!EnsureAny(allDepts.Any(), "Sistemdə heç bir departament yoxdur! Yeniləmək üçün əvvəlcə departament yaradın.")) return false;
     await departmentController.PrintAllAsync();
     AnsiConsole.MarkupLine("");
-    string updateDIdStr = GetStringInput("[yellow]Yenilənəcək Department ID:[/]", IdExistsValidator(id => departmentService.GetByIdAsync(id).GetAwaiter().GetResult()));
+    string updateDIdStr = GetStringInput("[yellow]Yenilənəcək Department ID:[/]", IdExistsValidator(id => departmentService.GetById(id).GetAwaiter().GetResult()));
     if (updateDIdStr == "-1") return true;
     int updateDId = int.Parse(updateDIdStr);
 
     AnsiConsole.MarkupLine("[grey]Diqqət: Boş buraxsanız köhnə dəyər saxlanılacaq.[/]");
     string newDName = GetStringInput("[yellow]Yeni Department adı:[/]", name =>
     {
-        var existingD = departmentService.GetByIdAsync(updateDId).GetAwaiter().GetResult();
-        var all = departmentService.GetAllAsync().GetAwaiter().GetResult();
+        var existingD = departmentService.GetById(updateDId).GetAwaiter().GetResult();
+        var all = departmentService.GetAll().GetAwaiter().GetResult();
         if (!existingD.Name.Equals(name, StringComparison.OrdinalIgnoreCase) &&
             all.Any(d => d.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
             return ValidationResult.Error($"[red]{ValidationConstants.DepartmentNameExistsMessage}[/]");
@@ -400,25 +406,25 @@ static async Task<bool> HandleUpdateDepartment(DepartmentController departmentCo
 
 static async Task<bool> HandleDeleteDepartment(DepartmentController departmentController, IDepartmentService departmentService)
 {
-    var allDepts = await departmentService.GetAllAsync();
+    var allDepts = await departmentService.GetAll();
     return await HandleDelete(
         allDepts.Any(),
         "Sistemdə heç bir departament yoxdur!",
         async () => { await departmentController.PrintAllAsync(); },
         "Silinəcək Department ID:",
-        id => departmentService.GetByIdAsync(id).GetAwaiter().GetResult(),
+        id => departmentService.GetById(id).GetAwaiter().GetResult(),
         "Bu departamenti silmək istədiyinizə əminsiniz?",
         async id => { await departmentController.DeleteAsync(id); });
 }
 
 static async Task<bool> HandleGetDepartmentById(DepartmentController departmentController, IDepartmentService departmentService)
 {
-    var allDepts = await departmentService.GetAllAsync();
+    var allDepts = await departmentService.GetAll();
     return await HandleGetById(
         allDepts.Any(),
         "Sistemdə heç bir departament yoxdur!",
         "Department ID:",
-        id => departmentService.GetByIdAsync(id).GetAwaiter().GetResult(),
+        id => departmentService.GetById(id).GetAwaiter().GetResult(),
         async id => { await departmentController.PrintByIdAsync(id); });
 }
 
@@ -450,7 +456,7 @@ static async Task HandleSortDepartmentsByCapacity(DepartmentController departmen
 
 static async Task<bool> HandleCreateEmployee(EmployeeController employeeController, DepartmentController departmentController, IDepartmentService departmentService, IEmployeeService employeeService)
 {
-    var allDepts = await departmentService.GetAllAsync();
+    var allDepts = await departmentService.GetAll();
     if (!EnsureAny(allDepts.Any(), "Sistemdə heç bir departament yoxdur! İşçi əlavə etmək üçün əvvəlcə departament yaratmalısınız.")) return false;
     await departmentController.PrintAllAsync();
     AnsiConsole.MarkupLine("");
@@ -459,7 +465,7 @@ static async Task<bool> HandleCreateEmployee(EmployeeController employeeControll
         if (!int.TryParse(idStr, out int id)) return ValidationResult.Error("[red]Düzgün rəqəm daxil edin[/]");
         try
         {
-            var dept = departmentService.GetByIdAsync(id).GetAwaiter().GetResult();
+            var dept = departmentService.GetById(id).GetAwaiter().GetResult();
             if (dept.Capacity == 0) return ValidationResult.Error($"[red]{string.Format(ValidationConstants.DepartmentCapacityZeroMessage, dept.Name)}[/]");
             int currentCount = employeeService.GetByDepartmentIdAsync(id).GetAwaiter().GetResult().Count();
             if (currentCount >= dept.Capacity) return ValidationResult.Error($"[red]{string.Format(ValidationConstants.DepartmentFullMessage, dept.Name, dept.Capacity)}[/]");
@@ -488,11 +494,11 @@ static async Task<bool> HandleCreateEmployee(EmployeeController employeeControll
 
 static async Task<bool> HandleUpdateEmployee(EmployeeController employeeController, IDepartmentService departmentService, IEmployeeService employeeService)
 {
-    var allEmps = await employeeService.GetAllAsync();
+    var allEmps = await employeeService.GetAll();
     if (!EnsureAny(allEmps.Any(), "Sistemdə heç bir işçi yoxdur!")) return false;
     await employeeController.PrintAllAsync();
     AnsiConsole.MarkupLine("");
-    string updateEIdStr = GetStringInput("[yellow]Yenilənəcək Employee ID:[/]", IdExistsValidator(id => employeeService.GetByIdAsync(id).GetAwaiter().GetResult()));
+    string updateEIdStr = GetStringInput("[yellow]Yenilənəcək Employee ID:[/]", IdExistsValidator(id => employeeService.GetById(id).GetAwaiter().GetResult()));
     if (updateEIdStr == "-1") return true;
     int updateEId = int.Parse(updateEIdStr);
 
@@ -510,7 +516,7 @@ static async Task<bool> HandleUpdateEmployee(EmployeeController employeeControll
     string newEAddress = GetStringInput("[yellow]Yeni Ünvanı:[/]", null, allowEmpty: true);
     if (newEAddress == "-1") return true;
 
-    string deptInput = GetStringInput("[yellow]Yeni Department ID:[/]", IdExistsValidator(id => departmentService.GetByIdAsync(id).GetAwaiter().GetResult()), allowEmpty: true);
+    string deptInput = GetStringInput("[yellow]Yeni Department ID:[/]", IdExistsValidator(id => departmentService.GetById(id).GetAwaiter().GetResult()), allowEmpty: true);
     if (deptInput == "-1") return true;
 
     await employeeController.UpdateAsync(new EmployeeUpdateDto
@@ -527,24 +533,24 @@ static async Task<bool> HandleUpdateEmployee(EmployeeController employeeControll
 
 static async Task<bool> HandleGetEmployeeById(EmployeeController employeeController, IEmployeeService employeeService)
 {
-    var allEmps = await employeeService.GetAllAsync();
+    var allEmps = await employeeService.GetAll();
     return await HandleGetById(
         allEmps.Any(),
         "Sistemdə heç bir işçi yoxdur!",
         "Employee ID:",
-        id => employeeService.GetByIdAsync(id).GetAwaiter().GetResult(),
+        id => employeeService.GetById(id).GetAwaiter().GetResult(),
         async id => { await employeeController.PrintByIdAsync(id); });
 }
 
 static async Task<bool> HandleDeleteEmployee(EmployeeController employeeController, IEmployeeService employeeService)
 {
-    var allEmps = await employeeService.GetAllAsync();
+    var allEmps = await employeeService.GetAll();
     return await HandleDelete(
         allEmps.Any(),
         "Sistemdə heç bir işçi yoxdur!",
         async () => { await employeeController.PrintAllAsync(); },
         "Silinəcək Employee ID:",
-        id => employeeService.GetByIdAsync(id).GetAwaiter().GetResult(),
+        id => employeeService.GetById(id).GetAwaiter().GetResult(),
         "Bu işçini silmək istədiyinizə əminsiniz?",
         async id => { await employeeController.DeleteAsync(id); });
 }
@@ -559,11 +565,11 @@ static async Task<bool> HandleGetEmployeesByAge(EmployeeController employeeContr
 
 static async Task<bool> HandleGetEmployeesByDepartmentId(EmployeeController employeeController, DepartmentController departmentController, IDepartmentService departmentService)
 {
-    var allDepts = await departmentService.GetAllAsync();
+    var allDepts = await departmentService.GetAll();
     if (!EnsureAny(allDepts.Any(), "Sistemdə heç bir departament yoxdur!")) return false;
     await departmentController.PrintAllAsync();
     AnsiConsole.MarkupLine("");
-    string searchDeptIdStr = GetStringInput("[yellow]Department ID:[/]", IdExistsValidator(id => departmentService.GetByIdAsync(id).GetAwaiter().GetResult()));
+    string searchDeptIdStr = GetStringInput("[yellow]Department ID:[/]", IdExistsValidator(id => departmentService.GetById(id).GetAwaiter().GetResult()));
     if (searchDeptIdStr == "-1") return true;
     await employeeController.PrintByDepartmentIdAsync(int.Parse(searchDeptIdStr));
     return false;
@@ -571,7 +577,7 @@ static async Task<bool> HandleGetEmployeesByDepartmentId(EmployeeController empl
 
 static async Task<bool> HandleGetAllEmployeesByDepartmentName(EmployeeController employeeController, DepartmentController departmentController, IDepartmentService departmentService)
 {
-    var allDepts = await departmentService.GetAllAsync();
+    var allDepts = await departmentService.GetAll();
     if (!EnsureAny(allDepts.Any(), "Sistemdə heç bir departament yoxdur!")) return false;
     await departmentController.PrintAllAsync();
     AnsiConsole.MarkupLine("");
@@ -668,9 +674,9 @@ static IRenderable GetPreviewForOption(MenuOption option, Dictionary<MenuOption,
     }
 
     if (option == MenuOption.CreateDepartment)
-        content.AppendLine($"Hazırkı departament sayı: [green]{deptService.GetAllAsync().GetAwaiter().GetResult().Count()}[/]");
+        content.AppendLine($"Hazırkı departament sayı: [green]{deptService.GetAll().GetAwaiter().GetResult().Count()}[/]");
     else if (option == MenuOption.CreateEmployee || option == MenuOption.GetAllEmployeesCount)
-        content.AppendLine($"\nHazırkı işçi sayı: [green]{empService.GetAllAsync().GetAwaiter().GetResult().Count()}[/]");
+        content.AppendLine($"\nHazırkı işçi sayı: [green]{empService.GetAll().GetAwaiter().GetResult().Count()}[/]");
 
     return PadToLines(content, 11);
 }
@@ -679,8 +685,8 @@ static IRenderable GetStatsPanelContent(IDepartmentService deptService, IEmploye
 {
     var content = new StringBuilder();
 
-    var depts = deptService.GetAllAsync().GetAwaiter().GetResult().ToList();
-    var emps = empService.GetAllAsync().GetAwaiter().GetResult().ToList();
+    var depts = deptService.GetAll().GetAwaiter().GetResult().ToList();
+    var emps = empService.GetAll().GetAwaiter().GetResult().ToList();
 
     content.AppendLine($"Ümumi Departament Sayı: [bold]{depts.Count}[/]");
     content.AppendLine($"Ümumi İşçi Sayı: [bold]{emps.Count}[/]");

@@ -67,7 +67,7 @@ namespace CompanyApplication.Controller
             await ExecuteSafeAsync(async () =>
             {
                 await AnsiConsole.Status().StartAsync("Yaradılır...", async ctx =>
-                    await _departmentService.CreateAsync(dto));
+                    await _departmentService.Create(dto));
                 PrintSuccess("Department uğurla yaradıldı.");
             });
 
@@ -75,7 +75,7 @@ namespace CompanyApplication.Controller
             await ExecuteSafeAsync(async () =>
             {
                 await AnsiConsole.Status().StartAsync("Yenilənir...", async ctx =>
-                    await _departmentService.UpdateAsync(dto));
+                    await _departmentService.Update(dto));
                 PrintSuccess("Department uğurla yeniləndi.");
             });
 
@@ -83,21 +83,21 @@ namespace CompanyApplication.Controller
             await ExecuteSafeAsync(async () =>
             {
                 await AnsiConsole.Status().StartAsync("Silinir...", async ctx =>
-                    await _departmentService.DeleteAsync(id));
+                    await _departmentService.Remove(id));
                 PrintSuccess("Department uğurla silindi.");
             });
 
         public async Task PrintByIdAsync(int id) =>
             await ExecuteSafeAsync(async () =>
             {
-                var dept = await _departmentService.GetByIdAsync(id);
+                var dept = await _departmentService.GetById(id);
                 await PrintDepartmentsAsync(new[] { dept });
             });
 
         public async Task PrintAllAsync() =>
             await ExecuteSafeAsync(async () =>
             {
-                var departments = await _departmentService.GetAllAsync();
+                var departments = await _departmentService.GetAll();
                 await PrintDepartmentsAsync(departments);
             });
 

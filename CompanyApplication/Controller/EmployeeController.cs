@@ -64,7 +64,7 @@ namespace CompanyApplication.Controller
             await ExecuteSafeAsync(async () =>
             {
                 await AnsiConsole.Status().StartAsync("Yaradılır...", async ctx =>
-                    await _employeeService.CreateAsync(dto));
+                    await _employeeService.Create(dto));
                 PrintSuccess("Employee uğurla yaradıldı.");
             });
 
@@ -72,7 +72,7 @@ namespace CompanyApplication.Controller
             await ExecuteSafeAsync(async () =>
             {
                 await AnsiConsole.Status().StartAsync("Yenilənir...", async ctx =>
-                    await _employeeService.UpdateAsync(dto));
+                    await _employeeService.Update(dto));
                 PrintSuccess("Employee uğurla yeniləndi.");
             });
 
@@ -80,14 +80,14 @@ namespace CompanyApplication.Controller
             await ExecuteSafeAsync(async () =>
             {
                 await AnsiConsole.Status().StartAsync("Silinir...", async ctx =>
-                    await _employeeService.DeleteAsync(id));
+                    await _employeeService.Remove(id));
                 PrintSuccess("Employee uğurla silindi.");
             });
 
         public async Task PrintByIdAsync(int id) =>
             await ExecuteSafeAsync(async () =>
             {
-                var emp = await _employeeService.GetByIdAsync(id);
+                var emp = await _employeeService.GetById(id);
                 PrintEmployees(new[] { emp });
             });
 
@@ -143,7 +143,7 @@ namespace CompanyApplication.Controller
         public async Task PrintAllAsync() =>
             await ExecuteSafeAsync(async () =>
             {
-                var employees = await _employeeService.GetAllAsync();
+                var employees = await _employeeService.GetAll();
                 PrintEmployees(employees);
             });
     }
