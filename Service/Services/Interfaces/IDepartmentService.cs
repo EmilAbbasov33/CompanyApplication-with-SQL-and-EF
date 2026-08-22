@@ -1,5 +1,5 @@
 using Domain.Entities;
-using Service.DTOs;
+using Service.DTOs.DepartmentDTO;
 using Service.Enums;
 
 namespace Service.Services.Interfaces

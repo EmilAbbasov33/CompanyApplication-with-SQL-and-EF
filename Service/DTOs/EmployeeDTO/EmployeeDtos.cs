@@ -1,6 +1,6 @@
 using Service.DTOs.DepartmentDTO;
 
-namespace Service.DTOs
+namespace Service.DTOs.EmployeeDTO
 {
     public class EmployeeDto
     {

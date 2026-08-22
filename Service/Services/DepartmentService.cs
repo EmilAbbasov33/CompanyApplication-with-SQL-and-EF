@@ -1,7 +1,7 @@
 using AutoMapper;
 using Domain.Entities;
 using Repository.Repositories.Interfaces;
-using Service.DTOs;
+using Service.DTOs.DepartmentDTO;
 using Service.Enums;
 using Service.Exceptions;
 using Service.Helpers.Constants;
@@ -9,9 +9,7 @@ using Service.Services.Interfaces;
 
 namespace Service.Services
 {
-    public class DepartmentService
-        : CrudManager<Department, DepartmentDto, DepartmentCreateDto, DepartmentUpdateDto>,
-          IDepartmentService
+    public class DepartmentService : CrudManager<Department, DepartmentDto, DepartmentCreateDto, DepartmentUpdateDto>, IDepartmentService
     {
         private readonly IDepartmentRepository _departmentRepository;
         private readonly IEmployeeRepository _employeeRepository;

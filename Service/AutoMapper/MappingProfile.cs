@@ -1,6 +1,7 @@
 using AutoMapper;
 using Domain.Entities;
-using Service.DTOs;
+using Service.DTOs.DepartmentDTO;
+using Service.DTOs.EmployeeDTO;
 
 namespace Service.AutoMapper
 {

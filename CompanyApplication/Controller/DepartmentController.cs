@@ -1,4 +1,4 @@
-using Service.DTOs;
+using Service.DTOs.DepartmentDTO;
 using Service.Enums;
 using Service.Exceptions;
 using Service.Services.Interfaces;
@@ -35,8 +35,8 @@ namespace CompanyApplication.Controller
                 await action();
             }
             catch (DepartmentNotFoundException ex) { PrintError(ex.Message); }
-            catch (ValidationException ex)         { PrintError(ex.Message); }
-            catch (Exception ex)                   { PrintError($"Gözlənilməz xəta: {ex.Message}"); }
+            catch (ValidationException ex) { PrintError(ex.Message); }
+            catch (Exception ex) { PrintError($"Gözlənilməz xəta: {ex.Message}"); }
         }
 
         private async Task PrintDepartmentsAsync(IEnumerable<DepartmentDto> departments, string emptyMessage = "[yellow]Siyahı boşdur.[/]")
