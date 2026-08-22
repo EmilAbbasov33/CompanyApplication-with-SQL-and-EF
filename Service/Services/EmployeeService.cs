@@ -5,40 +5,38 @@ using Service.Delegates;
 using Service.DTOs;
 using Service.Exceptions;
 using Service.Helpers.Constants;
-using Service.Profiles;
 using Service.Services.Interfaces;
 
 namespace Service.Services
 {
-    public class EmployeeService : IEmployeeService
+    public class EmployeeService
+        : CrudManager<Employee, EmployeeDto, EmployeeCreateDto, EmployeeUpdateDto>,
+          IEmployeeService
     {
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IDepartmentRepository _departmentRepository;
-        private readonly IMapper _mapper;
 
-        public EmployeeService(IEmployeeRepository employeeRepository, IDepartmentRepository departmentRepository)
+        public EmployeeService(IEmployeeRepository employeeRepository,
+                               IDepartmentRepository departmentRepository,
+                               IMapper mapper)
+            : base(employeeRepository, mapper)
         {
             _employeeRepository = employeeRepository;
             _departmentRepository = departmentRepository;
-            
-            var config = new MapperConfiguration(cfg => {
-                cfg.AddProfile(new MappingProfile());
-            }, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance);
-            _mapper = config.CreateMapper();
         }
 
         private async Task<EmployeeDto> PopulateDepartmentAsync(Employee employee)
         {
-            var dto = _mapper.Map<EmployeeDto>(employee);
+            var dto = Mapper.Map<EmployeeDto>(employee);
             var department = await _departmentRepository.GetByIdAsync(employee.DepartmentId);
-            if(department != null)
+            if (department != null)
             {
-                dto.Department = _mapper.Map<DepartmentDto>(department);
+                dto.Department = Mapper.Map<DepartmentDto>(department);
             }
             return dto;
         }
 
-        public async Task CreateAsync(EmployeeCreateDto dto)
+        public override async Task Create(EmployeeCreateDto dto)
         {
             if (dto == null)
                 throw new ValidationException(ValidationConstants.RequiredFieldMessage);
@@ -75,16 +73,15 @@ namespace Service.Services
             if (currentEmployeeCount >= department.Capacity)
                 throw new ValidationException(string.Format(ValidationConstants.DepartmentFullMessage, department.Name, department.Capacity));
 
-            var employee = _mapper.Map<Employee>(dto);
-            await _employeeRepository.CreateAsync(employee);
+            await base.Create(dto);
         }
 
-        public async Task UpdateAsync(EmployeeUpdateDto dto)
+        public override async Task Update(EmployeeUpdateDto dto)
         {
             if (dto == null)
                 throw new ValidationException(ValidationConstants.RequiredFieldMessage);
 
-            var existingEmployee = await _employeeRepository.GetByIdAsync(dto.Id);
+            var existingEmployee = await Repository.GetByIdAsync(dto.Id);
             if (existingEmployee == null)
                 throw new EmployeeNotFoundException(ValidationConstants.EmployeeNotFoundMessage);
 
@@ -136,21 +133,32 @@ namespace Service.Services
                 existingEmployee.DepartmentId = dto.DepartmentId;
             }
 
-            await _employeeRepository.UpdateAsync(existingEmployee);
+            await Repository.UpdateAsync(existingEmployee);
         }
 
-        public async Task DeleteAsync(int id)
+        public override async Task Remove(int id)
         {
-            var existingEmployee = await _employeeRepository.GetByIdAsync(id);
+            var existingEmployee = await Repository.GetByIdAsync(id);
             if (existingEmployee == null)
                 throw new EmployeeNotFoundException(ValidationConstants.EmployeeNotFoundMessage);
 
-            await _employeeRepository.DeleteAsync(id);
+            await Repository.DeleteAsync(id);
         }
 
-        public async Task<EmployeeDto> GetByIdAsync(int id)
+        public override async Task<IEnumerable<EmployeeDto>> GetAll()
         {
-            var existingEmployee = await _employeeRepository.GetByIdAsync(id);
+            var employees = await Repository.GetAllAsync();
+            var dtos = new List<EmployeeDto>();
+            foreach (var emp in employees)
+            {
+                dtos.Add(await PopulateDepartmentAsync(emp));
+            }
+            return dtos;
+        }
+
+        public override async Task<EmployeeDto?> GetById(int id)
+        {
+            var existingEmployee = await Repository.GetByIdAsync(id);
             if (existingEmployee == null)
                 throw new EmployeeNotFoundException(ValidationConstants.EmployeeNotFoundMessage);
 
@@ -184,7 +192,7 @@ namespace Service.Services
             var departments = await _departmentRepository.SearchAsync(departmentName);
             var departmentIds = departments.Select(d => d.Id).ToList();
 
-            var allEmployees = await _employeeRepository.GetAllAsync();
+            var allEmployees = await Repository.GetAllAsync();
             var employees = allEmployees.Where(e => departmentIds.Contains(e.DepartmentId));
 
             var dtos = new List<EmployeeDto>();
@@ -208,19 +216,8 @@ namespace Service.Services
 
         public async Task<int> GetCountAsync()
         {
-            var employees = await _employeeRepository.GetAllAsync();
+            var employees = await Repository.GetAllAsync();
             return employees.Count();
-        }
-
-        public async Task<IEnumerable<EmployeeDto>> GetAllAsync()
-        {
-            var employees = await _employeeRepository.GetAllAsync();
-            var dtos = new List<EmployeeDto>();
-            foreach (var emp in employees)
-            {
-                dtos.Add(await PopulateDepartmentAsync(emp));
-            }
-            return dtos;
         }
     }
 }
