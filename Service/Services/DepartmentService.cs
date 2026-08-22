@@ -92,6 +92,15 @@ namespace Service.Services
             await Repository.DeleteAsync(id);
         }
 
+        public override async Task<DepartmentDto?> GetById(int id)
+        {
+            var existingDepartment = await Repository.GetByIdAsync(id);
+            if (existingDepartment == null)
+                throw new DepartmentNotFoundException(ValidationConstants.DepartmentNotFoundMessage);
+
+            return Mapper.Map<DepartmentDto>(existingDepartment);
+        }
+
         public async Task<IEnumerable<DepartmentDto>> SearchAsync(string text)
         {
             var departments = await _departmentRepository.SearchAsync(text);
