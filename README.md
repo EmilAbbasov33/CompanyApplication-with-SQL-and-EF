@@ -19,7 +19,7 @@ Manages departments and employees with full CRUD operations, validation, and a r
 
 ## 🏗️ Architecture
 
-The project follows a **Layered Architecture**:
+The project follows an **N-Tier / Layered Architecture**:
 
 ```
 CompanyApplication     → UI / Entry point (Console + Controllers)
