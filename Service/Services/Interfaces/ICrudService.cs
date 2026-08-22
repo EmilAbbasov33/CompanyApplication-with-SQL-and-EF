@@ -2,8 +2,7 @@ using Domain.Entities;
 
 namespace Service.Services.Interfaces
 {
-    public interface ICrudService<TEntity, TDto, TCreateDto, TUpdateDto>
-        where TEntity : BaseEntity
+    public interface ICrudService<TEntity, TDto, TCreateDto, TUpdateDto> where TEntity : BaseEntity
     {
         Task<IEnumerable<TDto>> GetAll();
         Task<TDto?> GetById(int id);

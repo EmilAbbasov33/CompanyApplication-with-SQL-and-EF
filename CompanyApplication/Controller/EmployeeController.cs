@@ -1,4 +1,4 @@
-using Service.DTOs;
+using Service.DTOs.EmployeeDTO;
 using Service.Exceptions;
 using Service.Services.Interfaces;
 using Spectre.Console;
@@ -31,10 +31,10 @@ namespace CompanyApplication.Controller
             {
                 await action();
             }
-            catch (EmployeeNotFoundException ex)   { PrintError(ex.Message); }
+            catch (EmployeeNotFoundException ex) { PrintError(ex.Message); }
             catch (DepartmentNotFoundException ex) { PrintError(ex.Message); }
-            catch (ValidationException ex)         { PrintError(ex.Message); }
-            catch (Exception ex)                   { PrintError($"Gözlənilməz xəta: {ex.Message}"); }
+            catch (ValidationException ex) { PrintError(ex.Message); }
+            catch (Exception ex) { PrintError($"Gözlənilməz xəta: {ex.Message}"); }
         }
 
         private void PrintEmployees(IEnumerable<EmployeeDto> employees, string emptyMessage = "[yellow]Siyahı boşdur.[/]")

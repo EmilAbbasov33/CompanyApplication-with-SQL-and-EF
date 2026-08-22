@@ -1,5 +1,5 @@
 using Domain.Entities;
-using Service.DTOs;
+using Service.DTOs.EmployeeDTO;
 
 namespace Service.Services.Interfaces
 {
