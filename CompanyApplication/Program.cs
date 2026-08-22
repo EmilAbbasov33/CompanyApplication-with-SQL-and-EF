@@ -1,3 +1,4 @@
+#pragma warning disable CA1416
 using AutoMapper;
 using CompanyApplication.Controller;
 using Microsoft.EntityFrameworkCore;
@@ -175,16 +176,19 @@ while (true)
                     searchBuffer = "";
                     if (key.Key == ConsoleKey.UpArrow)
                     {
+                        if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(900, 20); Console.Beep(1400, 25); });
                         selectedIndex--;
                         if (selectedIndex < 0) selectedIndex = menuItems.Count - 1;
                     }
                     else if (key.Key == ConsoleKey.DownArrow)
                     {
+                        if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(900, 20); Console.Beep(1400, 25); });
                         selectedIndex++;
                         if (selectedIndex >= menuItems.Count) selectedIndex = 0;
                     }
                     else if (key.Key == ConsoleKey.Enter)
                     {
+                        if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(1200, 30); Console.Beep(1600, 30); Console.Beep(2200, 50); });
                         chosenOption = menuItems[selectedIndex].Option;
                         break;
                     }
@@ -618,6 +622,7 @@ static string GetStringInput(string message, Func<string, ValidationResult>? val
             }
             else if (key.Key == ConsoleKey.Escape)
             {
+                if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(900, 40); Console.Beep(600, 40); Console.Beep(300, 60); });
                 cancelled = true;
                 Console.WriteLine();
                 break;
@@ -654,6 +659,7 @@ static string GetStringInput(string message, Func<string, ValidationResult>? val
             var result = validator(val);
             if (!result.Successful)
             {
+                if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(400, 100); Console.Beep(300, 150); });
                 AnsiConsole.MarkupLine(result.Message ?? "[red]Xəta[/]");
                 continue;
             }

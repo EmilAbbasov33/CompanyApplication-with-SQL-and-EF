@@ -1,3 +1,4 @@
+#pragma warning disable CA1416
 using Service.DTOs.DepartmentDTO;
 using Service.Enums;
 using Service.Exceptions;
@@ -19,6 +20,7 @@ namespace CompanyApplication.Controller
 
         private void PrintError(string message)
         {
+            if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(300, 150); Console.Beep(200, 200); });
             var panel = new Panel($"[red]XƏTA: {message}[/]").BorderColor(Color.Red);
             AnsiConsole.Write(panel);
         }
@@ -43,6 +45,7 @@ namespace CompanyApplication.Controller
         {
             if (!departments.Any())
             {
+                if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(250, 200); });
                 AnsiConsole.MarkupLine(emptyMessage);
                 return;
             }
@@ -108,6 +111,7 @@ namespace CompanyApplication.Controller
                 var departments = await _departmentService.SearchAsync(text);
                 if (!departments.Any())
                 {
+                    if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(250, 200); });
                     AnsiConsole.MarkupLine("[red]Axtarışa uyğun nəticə tapılmadı. Zəhmət olmasa yenidən cəhd edin.[/]");
                     return false;
                 }
@@ -129,3 +133,4 @@ namespace CompanyApplication.Controller
             });
     }
 }
+

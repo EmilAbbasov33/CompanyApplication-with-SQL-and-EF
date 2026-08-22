@@ -1,3 +1,4 @@
+#pragma warning disable CA1416
 using Service.DTOs.EmployeeDTO;
 using Service.Exceptions;
 using Service.Services.Interfaces;
@@ -16,6 +17,7 @@ namespace CompanyApplication.Controller
 
         private void PrintError(string message)
         {
+            if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(300, 150); Console.Beep(200, 200); });
             var panel = new Panel($"[red]XƏTA: {message}[/]").BorderColor(Color.Red);
             AnsiConsole.Write(panel);
         }
@@ -41,6 +43,7 @@ namespace CompanyApplication.Controller
         {
             if (!employees.Any())
             {
+                if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(250, 200); });
                 AnsiConsole.MarkupLine(emptyMessage);
                 return;
             }
@@ -119,6 +122,7 @@ namespace CompanyApplication.Controller
                 var employees = await _employeeService.SearchAsync(text);
                 if (!employees.Any())
                 {
+                    if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(250, 200); });
                     AnsiConsole.MarkupLine("[red]Axtarışa uyğun nəticə tapılmadı. Zəhmət olmasa yenidən cəhd edin.[/]");
                     return false;
                 }
@@ -148,3 +152,4 @@ namespace CompanyApplication.Controller
             });
     }
 }
+
