@@ -24,6 +24,7 @@ namespace CompanyApplication.Controller
 
         private void PrintSuccess(string message)
         {
+            if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(1046, 100); Console.Beep(1318, 100); Console.Beep(1567, 150); });
             AnsiConsole.MarkupLine($"[green]✔ {message}[/]");
         }
 
@@ -48,6 +49,7 @@ namespace CompanyApplication.Controller
                 return;
             }
 
+            if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(1200, 50); Console.Beep(1600, 100); });
             var table = new Table().BorderColor(Color.Cyan).Border(TableBorder.Rounded).Expand();
             table.AddColumn("[cyan]ID[/]");
             table.AddColumn("[cyan]Ad Soyad[/]");

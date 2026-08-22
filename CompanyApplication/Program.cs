@@ -18,13 +18,44 @@ using System.Text;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-AnsiConsole.Status().Start("Verilənlər bazası yoxlanılır...", ctx =>
-{
-    using (var dbContext = new AppDbContext())
+Console.Clear();
+for (int i = 0; i < 6; i++) Console.WriteLine(); // Ekranın mərkəzinə doğru salmaq üçün
+AnsiConsole.Write(
+    new FigletText("COMPANY APP")
+        .Centered()
+        .Color(Color.Cyan1));
+
+await AnsiConsole.Progress()
+    .AutoClear(true)
+    .Columns(new ProgressColumn[]
     {
-        dbContext.Database.Migrate();
-    }
-});
+        new TaskDescriptionColumn(),
+        new ProgressBarColumn(),
+        new PercentageColumn(),
+        new SpinnerColumn(),
+    })
+    .StartAsync(async ctx =>
+    {
+        var task1 = ctx.AddTask("[yellow]Sistem başladılır...[/]");
+        var task2 = ctx.AddTask("[green]Verilənlər bazası yoxlanılır...[/]");
+        var task3 = ctx.AddTask("[cyan]Modullar aktivləşdirilir...[/]");
+
+        while (!ctx.IsFinished)
+        {
+            await Task.Delay(30);
+            task1.Increment(2.5);
+            if (task1.Value > 40) task2.Increment(2);
+            if (task2.Value > 50) task3.Increment(3);
+        }
+
+        using (var dbContext = new AppDbContext())
+        {
+            dbContext.Database.Migrate();
+        }
+
+        if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(1000, 100); Console.Beep(1500, 150); });
+    });
+Console.Clear();
 
 var departmentRepository = new DepartmentRepository();
 var employeeRepository = new EmployeeRepository();
@@ -201,7 +232,24 @@ while (true)
 
     if (selectedOption == MenuOption.Exit)
     {
-        AnsiConsole.MarkupLine("[red]Çıxılır...[/]");
+        Console.Clear();
+        for (int i = 0; i < 8; i++) Console.WriteLine(); // Ekranın mərkəzinə doğru salmaq üçün
+        AnsiConsole.Write(
+            new FigletText("GORUSENEDEK")
+                .Centered()
+                .Color(Color.Red));
+
+        if (OperatingSystem.IsWindows()) _ = Task.Run(() => { Console.Beep(900, 100); Console.Beep(600, 100); Console.Beep(300, 200); });
+
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .SpinnerStyle(Style.Parse("red"))
+            .StartAsync("Sistem bağlanır...", async ctx =>
+            {
+                await Task.Delay(1500);
+            });
+
+        Console.Clear();
         break;
     }
 
